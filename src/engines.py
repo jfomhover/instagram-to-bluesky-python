@@ -13,7 +13,6 @@ from atproto import Client, models, client_utils
 from .models import BlueSkyMigrationJob, InstagramArchive
 from .models import MigrationConfig
 from .models import BlueSkyMigrationJobState
-import emoji
 
 
 def decode_utf8(data):

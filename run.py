@@ -4,7 +4,7 @@ It reads the Instagram archive and extracts posts, then migrates them to Bluesky
 
 NOTE: the script will not do anything unless you add --migrate to the command line.
 
-RECOMMENDED: use --pick 1 to test with a single post first.
+RECOMMENDED: use --pick 0 to test with a single post first.
 """
 
 import os
