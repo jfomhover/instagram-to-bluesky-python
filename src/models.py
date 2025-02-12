@@ -43,7 +43,7 @@ class InstagramArchiveMedia(pydantic.BaseModel, extra="allow"):
 
 class InstagramArchivePost(pydantic.BaseModel, extra="allow"):
     media: List[InstagramArchiveMedia]
-    title: Optional[str] = ""
+    title: Optional[str] = None
     creation_timestamp: Optional[int] = None
 
 

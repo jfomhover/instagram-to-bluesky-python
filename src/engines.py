@@ -104,6 +104,24 @@ class InstagramArchiveParsingEngine:
         # build a queue
         self.migration_queue = MigrationQueue(self.config.queue_dir)
 
+    def _figure_out_post_title(self, post) -> str:
+        """Figure out the post title when empty, based on embeds."""
+        if post.title is None:
+            for media in post.media:
+                if media.title:
+                    return media.title
+        else:
+            return post.title
+
+        # title is still empty, use date instead
+        if post.creation_timestamp:
+            return datetime.fromtimestamp(post.creation_timestamp).strftime(
+                "%Y-%m-%d"
+            )
+
+        return None
+
+
     def extract_posts_to_queue(self):
         """Extract posts from Instagram archive to queue for migration."""
         logger.info(f"Extracting posts from Instagram archive: {self.archive_folder}")
@@ -136,10 +154,7 @@ class InstagramArchiveParsingEngine:
                 )
 
             # rectify the title if not present
-            if post.title is None:
-                post.title = (
-                    post.media[0].title if post.media and post.media[0].title else None
-                )
+            post.title = self._figure_out_post_title(post)
 
         # sort posts by creation timestamp
         archive.posts = sorted(archive.posts, key=lambda x: x.creation_timestamp)
