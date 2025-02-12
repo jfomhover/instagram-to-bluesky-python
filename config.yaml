@@ -1,0 +1,23 @@
+# SERVICE LIMITS
+
+max_images_per_post: 4
+max_videos_per_post: 1
+post_text_limit: 300
+post_text_truncate_suffix: "..."
+api_rate_limit_delay_secs: 3
+
+
+# MIGRATION PARAMETERS
+
+# import only posts within a given date range
+# min_date: '2015-01-27T05:57:31.399Z'
+# max_date: '2015-01-27T05:57:31.399Z'
+
+# where to store the queued posts
+queue_dir: "./queue"
+
+# the bluesky endpoint
+endpoint: "https://bsky.social"
+
+# which strategy to have both images and videos in a post
+media_strategy: "videolast"  # also available "ordered"

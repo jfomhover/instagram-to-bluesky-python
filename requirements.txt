@@ -1,0 +1,5 @@
+python-dotenv==1.0.1
+loguru==0.7.3
+atproto==0.0.58
+omegaconf==2.3.0
+pydantic==2.10.6
