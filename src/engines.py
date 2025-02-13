@@ -177,6 +177,14 @@ class InstagramArchiveParsingEngine:
 
         logger.info(f"Queued {len(self.migration_queue.queue)} posts to migrate.")
 
+    def _process_image(self, image_path):
+        # open the image file to check if size is above 950KB
+        with open(image_path, "rb") as f:
+            image_data = f.read()
+        if len(image_data) > 950 * 1024:
+            logger.warning(f"Image {image_path} is too large, skipping.")
+            return None
+
     def _partition_media(self, media: List[Dict[str, Any]], strategy: str = "ordered"):
         """Partition media into lists of length self.max_images_per_post.
 
@@ -292,7 +300,8 @@ class InstagramArchiveParsingEngine:
                 facets=text_builder.build_facets(),
                 created_at=(
                     # convert timestamp into expected format
-                    datetime.fromtimestamp(post.creation_timestamp).isoformat()
+                    # add 1 second between replies to avoid conflation
+                    datetime.fromtimestamp(post.creation_timestamp + index).isoformat()
                     + "Z"
                 ),
                 embed=partition,
@@ -403,6 +412,8 @@ class BlueSkyPostingEngine:
             migration_job.root_index is not None
             and migration_job.parent_index is not None
         ):
+            # logger.info(f"Skipping reply to root_index={migration_job.root_index}")
+            # return
             logger.info(
                 f"Posting reply to root_index={migration_job.root_index} parent_index={migration_job.parent_index}"
             )
