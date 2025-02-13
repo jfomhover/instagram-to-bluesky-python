@@ -466,8 +466,8 @@ class BlueSkyPostingEngine:
                 )
                 continue
 
-            if index > 0:
-                time.sleep(self.config.api_rate_limit_delay_secs)
+            # if index > 0:
+            #     time.sleep(self.config.api_rate_limit_delay_secs)
 
             if (
                 post.state == BlueSkyMigrationJobState.READY
