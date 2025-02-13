@@ -38,6 +38,8 @@ Another example, if you have a post made of 3 images, 1 video, 1 video, 1 image,
 - 1 reply with the 1st video
 - 1 reply with the 2nd video
 
+See a [screenshot example here](./docs/.media/example-post.png).
+
 ### Figuring out the text for each post
 
 The IG archive you download has the text in 2 places. The text can be either the main text of the post, or attached to the first image of the post. The script will figure out which one to use automatically.
