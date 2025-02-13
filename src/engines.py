@@ -113,14 +113,7 @@ class InstagramArchiveParsingEngine:
         else:
             return post.title
 
-        # title is still empty, use date instead
-        if post.creation_timestamp:
-            return datetime.fromtimestamp(post.creation_timestamp).strftime(
-                "%Y-%m-%d"
-            )
-
-        return None
-
+        return "--"
 
     def extract_posts_to_queue(self):
         """Extract posts from Instagram archive to queue for migration."""
@@ -155,6 +148,10 @@ class InstagramArchiveParsingEngine:
 
             # rectify the title if not present
             post.title = self._figure_out_post_title(post)
+
+            # title is still empty, use date instead
+            date = datetime.fromtimestamp(post.creation_timestamp).strftime("%Y-%m-%d")
+            post.title += f" (from IG, {date})"
 
         # sort posts by creation timestamp
         archive.posts = sorted(archive.posts, key=lambda x: x.creation_timestamp)
@@ -425,6 +422,7 @@ class BlueSkyPostingEngine:
                 parent=parent_ref, root=root_ref
             )
 
+        # response = self.client.post(**_record_args)
         post = models.AppBskyFeedPost.Record(**_record_args)
         response = self.client.app.bsky.feed.post.create(self.client.me.did, post)
         logger.debug(f"Posted to Bluesky: {response.uri}")
@@ -451,12 +449,14 @@ class BlueSkyPostingEngine:
             return
 
         for index, post in enumerate(self.queue.queue):
+            if post.state == BlueSkyMigrationJobState.PROCESSED:
+                logger.debug(
+                    f"Skipping post job_index={post.job_index} archive_index={post.archive_index} - state: {post.state}"
+                )
+                continue
+
             if index > 0:
                 time.sleep(self.config.api_rate_limit_delay_secs)
-
-            if post.state == BlueSkyMigrationJobState.PROCESSED:
-                logger.debug(f"Skipping post {post.index} - state: {post.state}")
-                continue
 
             if (
                 post.state == BlueSkyMigrationJobState.READY
@@ -466,3 +466,30 @@ class BlueSkyPostingEngine:
                     f"Posting to Bluesky [{index}/{len(self.queue.queue)}]: {post.text}"
                 )
                 self._post_to_bluesky(post)
+
+    def rollback(self):
+        """Rollback posts from our queue into Bluesky."""
+        # login to Bluesky
+        if not self.simulate:
+            logger.info("Logging in to Bluesky...")
+            self.client.login(self.username, self.password)
+
+        for index, post in enumerate(self.queue.queue):
+            if post.state == BlueSkyMigrationJobState.READY:
+                logger.debug(
+                    f"Skipping post job_index={post.job_index} archive_index={post.archive_index} - state: {post.state}"
+                )
+                continue
+
+            if (
+                post.state == BlueSkyMigrationJobState.PROCESSED
+                or post.state == BlueSkyMigrationJobState.FAILED
+            ):
+                logger.info(
+                    f"Rolling back Bluesky [{index}/{len(self.queue.queue)}]: {post.text}"
+                )
+                # delete the post using cid/uri
+                self.client.delete_post(post.uri)
+                # update the state
+                post.state = BlueSkyMigrationJobState.READY
+                self.queue.save(post)

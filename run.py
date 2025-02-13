@@ -63,6 +63,20 @@ def main(args):
         else:
             logger.info("Posting to Bluesky...")
             post_handler.post()
+    elif args.command == "rollback":
+        logger.info("Rolling back posts...")
+        if "BLUESKY_PASSWORD" in os.environ:
+            password = os.environ["BLUESKY_PASSWORD"]
+        else:
+            password = getpass("Enter your Bluesky password: ")
+        post_handler = BlueSkyPostingEngine(
+            archive_folder=args.archive_folder,
+            config=config,
+            username=args.username,
+            password=password,
+            simulate=False,
+        )
+        post_handler.rollback()
 
 
 if __name__ == "__main__":
@@ -70,7 +84,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "command",
         type=str,
-        choices=["import", "migrate", "simulate"],
+        choices=["import", "migrate", "simulate", "rollback"],
         help="Command to run.",
     )
     parser.add_argument(
