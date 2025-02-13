@@ -50,16 +50,90 @@ It shows as follows:
 
 Where `1/2` is the index in the thread it built (if post is split), and `(from IG, YYYY-MM-DD)` depends on the post original date in IG.
 
+### Date: creation date vs posting date
+
+When migrating your IG posts to bluesky, there will be 2 dates associated with your posts:
+
+- the posting date: it is the date at which you ran the migration script,
+- the creation date: it is the date of the original IG post
+
+Bluesky allows this, and it will be surfaced as shown below:
+
+![](./docs/.media/example-post-dates.png)
+
+On this example, the original post was created on Jan 1st, while the migration script ran on February 12. The creation date is surfaced just below the pictures ("Archive datée du..." in french).
+
+For extra transparency, the migration script adds the original date as a suffix in the post text ("from IG, 2025-01-01").
+
+### Known limits
+
+There's a couple of things I did not have bandwidth to implement:
+- Working with image size limits: if your image file is above 950K, it will be rejected. The script will fail, but you can resume it after you reduce the size of the corresponding image.
+- Date timezone: I did not have patience to verify if the timezone of the IG archive was in UTC or not, so there might be some weird date translation here.
+
 ## How to
 
-### Install requirements
-
-```bash
-pip install -r ./requirements.txt
-```
-
-### Migrate your content
+### A. Get the requirements
 
 1. Go to Instagram (web) and figure out how to download your archive. It might be [starting from here](https://www.instagram.com/download/request), but they change this process all the time, it's hard to document.
 
     > :warning: When prompted during the download process, specify you want to download your content for **all time**, and in format **JSON** (not HTML), and in **high quality**.
+
+2. Clone this repository locally (or [download the archive](https://github.com/jfomhover/instagram-to-bluesky-python/archive/refs/heads/main.zip) from GitHub):
+
+    ```bash
+    git clone https://github.com/jfomhover/instagram-to-bluesky-python.git
+    cd instagram-to-bluesky-python
+    ```
+
+3. Install the python dependencies (`python>=3.10`)
+
+    ```bash
+    pip install -r ./requirements.txt
+    ```
+
+### B. Import IG posts into a migration queue
+
+```bash
+python run.py import --archive-folder <your_ig_archive_folder>
+```
+
+It will create a folder `queue/` with a whole bunch of json files. Each represents one post to be sent to Bluesky.
+
+### C. Test by migrating 1 post
+
+Run the script with the argument `--pick 1` to migrate only one post from your queue. This number is an IG `archive_index` meaning if this IG post is split into a thread, it will post the whole thread (a good test).
+
+```bash
+python run.py migrate --archive-folder <your_ig_archive_folder> --username <your_bsky_account> --pick <N>
+```
+
+You'll be prompted to give your bluesky password.
+
+You can rollback this by using:
+
+```bash
+python run.py rollback --archive-folder <your_ig_archive_folder> --username <your_bsky_account>
+```
+
+It will delete this post only.
+
+### D. Migrate the bulk of your IG posts
+
+Run the script with the following arguments:
+
+```bash
+python run.py migrate --archive-folder <your_ig_archive_folder> --username <your_bsky_account>
+```
+
+You'll be prompted to give your bluesky password.
+
+If any error occurs (ex: [image size limit](#known-limits)), you can always fix locally and resume by using the command again. The script **writes the state of completed posts** in the `queue/` folder so it knows where to resume.
+
+You can always rollback this by using:
+
+```bash
+python run.py rollback --archive-folder <your_ig_archive_folder> --username <your_bsky_account>
+```
+
+It will delete all bluesky posts that were previously migrated from the queue.
