@@ -68,7 +68,7 @@ class BlueSkyMigrationJob(pydantic.BaseModel, extra="allow"):
 
     # the test of the post
     text: str
-    rich_text: str
+    rich_text: Optional[str] = None
     facets: List[Any] = []
 
     # the date of creation (original)
